@@ -1,4 +1,3 @@
-use regex::Regex;
 use std::cmp::max;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -12,16 +11,11 @@ struct Set {
 
 fn main() {
     let file = File::open("res/input").unwrap();
-    let re = Regex::new(r"Game \d+: (.*)").unwrap();
 
     let result = BufReader::new(file)
         .lines()
         .filter_map(Result::ok)
-        .map(|line| {
-            let captures = re.captures(&line).unwrap();
-            let record = captures.get(1).unwrap().as_str();
-            calc_power(record)
-        })
+        .map(|record| calc_power(record.split_once(':').unwrap().1))
         .sum::<u32>();
 
     println!("{result}");
@@ -29,25 +23,19 @@ fn main() {
 
 fn calc_power(record: &str) -> u32 {
     let fewest: Set = record
-        .split("; ")
-        .map(|setstr| {
-            let mut set = Set::default();
-            setstr.split(", ").for_each(|reveal| {
-                let (num, color) = reveal.split_once(' ').unwrap();
-                let num = num.parse::<u32>().unwrap();
-                match color {
-                    "red" => set.red = num,
-                    "green" => set.green = num,
-                    "blue" => set.blue = num,
-                    &_ => unreachable!(),
-                }
-            });
-            set
+        .split([',', ';'])
+        .map(|reveal| {
+            let (num, color) = reveal[1..].split_once(' ').unwrap();
+            let num = num.parse::<u32>().unwrap();
+            (color, num)
         })
-        .fold(Set::default(), |mut acc, item| {
-            acc.red = max(acc.red, item.red);
-            acc.green = max(acc.green, item.green);
-            acc.blue = max(acc.blue, item.blue);
+        .fold(Set::default(), |mut acc, (color, num)| {
+            match color {
+                "red" => acc.red = max(acc.red, num),
+                "green" => acc.green = max(acc.green, num),
+                "blue" => acc.blue = max(acc.blue, num),
+                &_ => unreachable!(),
+            }
             acc
         });
     fewest.red * fewest.green * fewest.blue
@@ -56,7 +44,7 @@ fn calc_power(record: &str) -> u32 {
 #[test]
 fn power() {
     assert_eq!(
-        calc_power("3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green"),
+        calc_power(" 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green"),
         48
     )
 }
