@@ -1,10 +1,10 @@
 use std::fs::File;
 use std::io::{self, BufRead};
 
-fn main() {
+fn main() -> io::Result<()> {
     let mut calibration_numbers: Vec<u8> = vec![];
 
-    let file = File::open("res/input").unwrap();
+    let file = File::open("res/input")?;
     let mut lines = io::BufReader::new(file).lines();
 
     while let Some(Ok(line)) = lines.next() {
@@ -15,6 +15,8 @@ fn main() {
 
     println!("{:?}", calibration_numbers);
     println!("{sum}");
+
+    Ok(())
 }
 
 fn get_calibration_number(line: String) -> u8 {
