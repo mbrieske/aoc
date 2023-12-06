@@ -7,8 +7,8 @@ fn main() {
 }
 
 fn puzzle<R: BufRead>(reader: R) -> usize {
-    let mut _lines = reader.lines().map_while(Result::ok);
-    288
+    let mut lines = reader.lines().map_while(Result::ok);
+    1
 }
 
 #[cfg(test)]
@@ -18,11 +18,8 @@ mod tests {
 
     #[test]
     fn example() {
-        let example = String::from(
-            "Time:      7  15   30
-Distance:  9  40  200",
-        );
+        let example = String::from("");
 
-        assert_eq!(puzzle(BufReader::new(Cursor::new(example))), 288);
+        assert_eq!(puzzle(BufReader::new(Cursor::new(example))), 0);
     }
 }
