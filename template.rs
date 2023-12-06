@@ -7,7 +7,7 @@ fn main() {
 }
 
 fn puzzle<R: BufRead>(reader: R) -> usize {
-    let mut _lines = reader.lines().filter_map(Result::ok);
+    let mut _lines = reader.lines().map_while(Result::ok);
     288
 }
 

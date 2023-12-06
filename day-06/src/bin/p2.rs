@@ -17,7 +17,7 @@ impl Race {
     }
 
     fn calc_record_possibilities(&self) -> usize {
-        let mut range = (0 as u64, self.time);
+        let mut range = (0_u64, self.time);
 
         let first_winning = loop {
             let test = range.0 + (range.1 - range.0) / 2;
@@ -50,7 +50,7 @@ impl Race {
 }
 
 fn puzzle<R: BufRead>(reader: R) -> usize {
-    let mut lines = reader.lines().filter_map(Result::ok);
+    let mut lines = reader.lines().map_while(Result::ok);
 
     let line1 = lines.next().unwrap();
     let time = line1[6..]

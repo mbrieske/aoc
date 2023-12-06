@@ -7,12 +7,12 @@ fn main() {
 }
 
 struct Race {
-    pub time: u64,
-    pub record: u64,
+    pub time: u32,
+    pub record: u32,
 }
 
 impl Race {
-    fn new(time: u64, record: u64) -> Race {
+    fn new(time: u32, record: u32) -> Race {
         Race { time, record }
     }
 
@@ -22,34 +22,32 @@ impl Race {
             .count()
     }
 
-    fn is_winning(&self, time_pressed: u64) -> bool {
+    fn is_winning(&self, time_pressed: u32) -> bool {
         let speed = &time_pressed;
         speed * (self.time - time_pressed) > self.record
     }
 }
 
 fn puzzle<R: BufRead>(reader: R) -> usize {
-    let mut lines = reader.lines().filter_map(Result::ok);
+    let mut lines = reader.lines().map_while(Result::ok);
 
     let line1 = lines.next().unwrap();
     let times = line1[6..]
         .split_whitespace()
-        .map(str::parse::<u64>)
+        .map(str::parse::<u32>)
         .filter_map(Result::ok);
 
     let line2 = lines.next().unwrap();
     let records = line2[9..]
         .split_whitespace()
-        .map(str::parse::<u64>)
+        .map(str::parse::<u32>)
         .filter_map(Result::ok);
 
-    let solution = times
+    times
         .zip(records)
         .map(|(time, record)| Race::new(time, record))
         .map(|race| race.calc_record_possibilities())
-        .fold(1, |acc, item| acc * item);
-
-    solution
+        .product()
 }
 
 #[cfg(test)]
