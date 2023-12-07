@@ -64,7 +64,7 @@ impl Hand {
         let cards = line
             .chars()
             .take(5)
-            .map(|c| Card::from(c))
+            .map(Card::from)
             .collect::<Vec<Card>>()
             .try_into()
             .unwrap();

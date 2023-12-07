@@ -64,7 +64,7 @@ impl Hand {
         let cards = line
             .chars()
             .take(5)
-            .map(|c| Card::from(c))
+            .map(Card::from)
             .collect::<Vec<Card>>()
             .try_into()
             .unwrap();
@@ -79,7 +79,7 @@ impl Hand {
         for card in cards.iter() {
             *counts.entry(card).or_insert(0) += 1;
         }
-        let jokers = counts.remove(&Card::J).or_else(|| Some(0)).unwrap();
+        let jokers = counts.remove(&Card::J).unwrap_or(0);
 
         let mut counts = counts.into_values().collect::<Vec<u8>>();
         counts.sort();
