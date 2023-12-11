@@ -3,9 +3,9 @@ use std::fs::read_to_string;
 
 #[derive(Debug)]
 enum AocError {
-    OutOfBoundsError,
-    NotConnectedError,
-    SError,
+    OutOfBounds,
+    NotConnected,
+    S,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -73,10 +73,10 @@ impl<'a> Map<'a> {
             if let Some(c) = line.as_bytes().get(pos.x) {
                 Ok(*c as char)
             } else {
-                Err(AocError::OutOfBoundsError)
+                Err(AocError::OutOfBounds)
             }
         } else {
-            Err(AocError::OutOfBoundsError)
+            Err(AocError::OutOfBounds)
         }
     }
 
@@ -103,7 +103,7 @@ impl<'a> Map<'a> {
                 x: from.x + 1,
                 y: from.y,
             },
-            S => return Err(AocError::SError),
+            S => return Err(AocError::S),
         };
 
         let next_dir = match (direction, self.get(&next_pos)?) {
@@ -125,7 +125,7 @@ impl<'a> Map<'a> {
             (Left, '-') => Left,
             (Left, 'L') => Up,
 
-            _ => return Err(AocError::NotConnectedError),
+            _ => return Err(AocError::NotConnected),
         };
 
         Ok((next_pos, next_dir))
