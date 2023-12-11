@@ -27,12 +27,11 @@ fn puzzle(input: String) -> usize {
     galaxy_positions
         .iter()
         .enumerate()
-        .map(|(i, pos_1)| {
+        .flat_map(|(i, pos_1)| {
             galaxy_positions[i + 1..]
                 .iter()
                 .map(|pos_2| pos_1.0.abs_diff(pos_2.0) + pos_1.1.abs_diff(pos_2.1))
         })
-        .flatten()
         .sum()
 }
 

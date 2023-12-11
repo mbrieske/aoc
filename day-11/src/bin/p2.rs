@@ -9,7 +9,7 @@ fn main() {
 }
 
 fn puzzle(input: String, by: usize) -> usize {
-    let mut map = input
+    let map = input
         .lines()
         .map(|line| line.chars().collect::<Vec<_>>())
         .collect::<Vec<_>>();
@@ -29,7 +29,7 @@ fn puzzle(input: String, by: usize) -> usize {
     galaxy_positions
         .iter()
         .enumerate()
-        .map(|(i, pos_1)| {
+        .flat_map(|(i, pos_1)| {
             galaxy_positions[i + 1..].iter().map(|pos_2| {
                 distance(
                     pos_1,
@@ -40,15 +40,14 @@ fn puzzle(input: String, by: usize) -> usize {
                 )
             })
         })
-        .flatten()
         .sum()
 }
 
 fn distance(
     pos_1: &(usize, usize),
     pos_2: &(usize, usize),
-    empty_vertical_galaxies: &Vec<usize>,
-    empty_horizontal_galaxies: &Vec<usize>,
+    empty_vertical_galaxies: &[usize],
+    empty_horizontal_galaxies: &[usize],
     by: usize,
 ) -> usize {
     let from_x = min(pos_1.0, pos_2.0);
@@ -61,7 +60,7 @@ fn distance(
         + count_in_range(empty_vertical_galaxies, (from_y, to_y)) * (by - 1)
 }
 
-fn count_in_range(sorted_vec: &Vec<usize>, range: (usize, usize)) -> usize {
+fn count_in_range(sorted_vec: &[usize], range: (usize, usize)) -> usize {
     let start_index = match sorted_vec.binary_search(&range.0) {
         Ok(index) => index,
         Err(index) => index,
@@ -79,7 +78,7 @@ fn count_in_range(sorted_vec: &Vec<usize>, range: (usize, usize)) -> usize {
     }
 }
 
-fn get_empty_galaxies_vertically(map: &Vec<Vec<char>>) -> Vec<usize> {
+fn get_empty_galaxies_vertically(map: &[Vec<char>]) -> Vec<usize> {
     map.iter()
         .enumerate()
         .filter(|(_, symbols)| !symbols.contains(&'#'))
