@@ -1,16 +1,8 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-
-fn main() {
-    let reader = BufReader::new(File::open("res/input").unwrap());
-    println!("{}", puzzle(reader));
+pub fn solve(input: &str) -> usize {
+    input.lines().map(process_line).sum()
 }
 
-fn puzzle<R: BufRead>(reader: R) -> usize {
-    reader.lines().map_while(Result::ok).map(process_line).sum()
-}
-
-fn process_line(line: String) -> usize {
+fn process_line(line: &str) -> usize {
     let (record, groups) = line.split_once(' ').unwrap();
     let unknowns = &record
         .char_indices()
@@ -58,20 +50,17 @@ fn get_groups(record: &Vec<u8>) -> Vec<usize> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::io::Cursor;
 
     #[test]
     fn example() {
-        let example = String::from(
-            "???.### 1,1,3
+        let example = "???.### 1,1,3
 .??..??...?##. 1,1,3
 ?#?#?#?#?#?#?#? 1,3,1,6
 ????.#...#... 4,1,1
 ????.######..#####. 1,6,5
-?###???????? 3,2,1",
-        );
+?###???????? 3,2,1";
 
-        assert_eq!(puzzle(BufReader::new(Cursor::new(example))), 21);
+        assert_eq!(solve(example), 21);
     }
 
     #[test]
@@ -82,7 +71,7 @@ mod tests {
 
     #[test]
     fn test_line() {
-        let line = "????.######..#####. 1,6,5".to_string();
-        assert_eq!(process_line(line), 4);
+        let line = ".?#?????###???. 1,6,1";
+        assert_eq!(process_line(line), 3);
     }
 }
