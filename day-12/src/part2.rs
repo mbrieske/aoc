@@ -4,10 +4,6 @@
 // static COUNT: AtomicUsize = AtomicUsize::new(0);
 
 pub fn solve(input: &str, repeat: usize) -> usize {
-    // rayon::ThreadPoolBuilder::new()
-    //     .num_threads(1)
-    //     .build_global()
-    //     .unwrap();
     input.lines().map(|line| process_line(line, repeat)).sum()
     // input.par_lines().map(|line| process_line(line, 5)).sum()
 }
@@ -31,11 +27,14 @@ fn process_line(line: &str, repeat: usize) -> usize {
     fit(&record, groups)
 }
 
-fn fit(record: &str, mut groups: Vec<usize>) -> usize {
-    if let Some(g) = groups.pop() {
+fn fit(record: &str, groups: Vec<usize>) -> usize {
+    if let Some((gi, &g)) = groups.iter().enumerate().max_by_key(|&(_, g)| g) {
         if record.len() < g {
             0
         } else {
+            let (groups_left, groups_right) = groups.split_at(gi);
+            let groups_right = &groups_right[1..];
+
             let mut possible_placements = Vec::new();
             for i in 0..record.len() - g + 1 {
                 if record[i..i + g].contains('.') {
@@ -49,57 +48,53 @@ fn fit(record: &str, mut groups: Vec<usize>) -> usize {
                 }
             }
 
-            let mut sum: usize = 0;
+            possible_placements
+                .iter()
+                .map(|&placement_index| {
+                    let (mut rec_left, mut rec_right) = record.split_at(placement_index);
+                    let options_left = {
+                        rec_left = if rec_left.len() <= 1 {
+                            ""
+                        } else {
+                            &rec_left[..rec_left.len() - 1]
+                        };
 
-            for placement_index in possible_placements {
-                let rec_remaining = if placement_index > 1 {
-                    &record[..placement_index - 1]
-                } else {
-                    ""
-                };
-                if record[placement_index + g..].contains('#') {
-                    continue; // not a valid placement
-                } else if groups.len() == 0 {
-                    if !rec_remaining.contains('#') {
-                        sum += 1;
+                        if groups_left.len() == 0 {
+                            if rec_left.contains('#') {
+                                0
+                            } else {
+                                1
+                            }
+                        } else {
+                            fit(rec_left, groups_left.to_vec())
+                        }
+                    };
+
+                    if options_left > 0 {
+                        let options_right = {
+                            rec_right = if rec_right.len() <= 1 + g {
+                                ""
+                            } else {
+                                &rec_right[1 + g..]
+                            };
+
+                            if groups_right.len() == 0 {
+                                if rec_right.contains('#') {
+                                    0
+                                } else {
+                                    1
+                                }
+                            } else {
+                                fit(rec_right, groups_right.to_vec())
+                            }
+                        };
+                        options_left * options_right
                     } else {
-                        continue;
+                        0
                     }
-                } else if placement_index > 0 {
-                    sum += fit(rec_remaining, groups.clone())
-                } else {
-                    continue;
-                }
-            }
-
-            sum
-
-            // possible_placements
-            //     .iter()
-            //     .map(|&placement_index| {
-            //         let rec_remaining = if placement_index > 1 {
-            //             &record[..placement_index - 1]
-            //         } else {
-            //             ""
-            //         };
-            //         if record[placement_index + g..].contains('#') {
-            //             0
-            //         } else if groups.len() == 0 {
-            //             if !rec_remaining.contains('#') {
-            //                 1
-            //             } else {
-            //                 0
-            //             }
-            //         } else if placement_index > 0 {
-            //             fit(rec_remaining, groups.clone())
-            //         } else {
-            //             0
-            //         }
-            //     })
-            //     .sum()
+                })
+                .sum()
         }
-    } else if !record.contains('#') {
-        1
     } else {
         0
     }
