@@ -4,7 +4,6 @@ use std::fs::read_to_string;
 
 fn main() {
     let input = read_to_string("res/input").unwrap();
-    for line in input.lines() {
-        assert!(solve_p1(line) == solve_p2(line))
-    }
+
+    println!("{}", solve_p2(&input));
 }

@@ -26,17 +26,24 @@ fn fit(record: &str, mut groups: Vec<usize>) -> usize {
                     }
                 }
             }
-            println!(
-                "Possible placements for {} in {}: {:?}",
-                g, record, possible_placements
-            );
+
             possible_placements
                 .iter()
                 .map(|&placement_index| {
-                    if groups.len() == 0 {
-                        1
+                    let rec_remaining = if placement_index > 1 {
+                        &record[..placement_index - 1]
+                    } else {
+                        ""
+                    };
+                    if record[placement_index + g..].contains('#') {
+                        0
+                    } else if groups.len() == 0 {
+                        if !rec_remaining.contains('#') {
+                            1
+                        } else {
+                            0
+                        }
                     } else if placement_index > 0 {
-                        let rec_remaining = &record[..placement_index - 1];
                         fit(rec_remaining, groups.clone())
                     } else {
                         0
@@ -106,7 +113,24 @@ mod tests {
     #[test]
     fn test_fit() {
         let record = ".?#?????###???. 1,6,1";
-        let groups = vec![1, 6, 1];
         assert_eq!(process_line(record), 3);
+    }
+
+    #[test]
+    fn test_fit_easy() {
+        let record = "??? 1";
+        assert_eq!(process_line(record), 3);
+    }
+
+    #[test]
+    fn test_line() {
+        let line = "????.?#????#?? 2,1,1,3";
+        assert_eq!(process_line(line), 12);
+    }
+
+    #[test]
+    fn test_line2() {
+        let line = "??.#? 2";
+        assert_eq!(process_line(line), 1);
     }
 }

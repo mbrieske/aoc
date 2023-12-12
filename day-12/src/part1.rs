@@ -71,7 +71,13 @@ mod tests {
 
     #[test]
     fn test_line() {
-        let line = ".?#?????###???. 1,6,1";
-        assert_eq!(process_line(line), 3);
+        let line = "????.?#????#?? 2,1,1,3";
+        assert_eq!(process_line(line), 12);
+    }
+
+    #[test]
+    fn test_line2() {
+        let line = "????.#??? 2";
+        assert_eq!(process_line(line), 1);
     }
 }
