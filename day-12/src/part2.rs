@@ -1,16 +1,14 @@
-// use rayon::prelude::*;
-// use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicUsize, Ordering};
 
-// static COUNT: AtomicUsize = AtomicUsize::new(0);
+static COUNT: AtomicUsize = AtomicUsize::new(0);
 
 pub fn solve(input: &str, repeat: usize) -> usize {
     input.lines().map(|line| process_line(line, repeat)).sum()
-    // input.par_lines().map(|line| process_line(line, 5)).sum()
 }
 
 fn process_line(line: &str, repeat: usize) -> usize {
-    // dbg!(&COUNT);
-    // COUNT.fetch_add(1, Ordering::SeqCst);
+    dbg!(&COUNT);
+    COUNT.fetch_add(1, Ordering::SeqCst);
     let (record, groups) = line.split_once(' ').unwrap();
 
     let record = (0..repeat)
@@ -37,7 +35,12 @@ fn fit(record: &str, groups: Vec<usize>) -> usize {
 
             let mut possible_placements = Vec::new();
             for i in 0..record.len() - g + 1 {
-                if record[i..i + g].contains('.') {
+                if record[i..i + g].contains('.')
+                    || (record[..i].len() + 1
+                        < groups_left.iter().sum::<usize>() + groups_left.len())
+                    || record[i + g..].len() + 1
+                        < groups_right.iter().sum::<usize>() + groups_right.len()
+                {
                     continue;
                 } else {
                     if (i == 0 || record.as_bytes()[i - 1] != '#' as u8)
