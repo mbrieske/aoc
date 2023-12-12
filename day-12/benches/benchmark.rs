@@ -10,7 +10,7 @@ fn criterion_benchmark(c: &mut Criterion) {
 ????.######..#####. 1,6,5
 ?###???????? 3,2,1";
 
-    c.bench_function("solver part2", |b| b.iter(|| solve(black_box(input))));
+    c.bench_function("solver part2", |b| b.iter(|| solve(black_box(input), 2)));
 }
 
 criterion_group!(benches, criterion_benchmark);
