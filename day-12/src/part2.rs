@@ -1,14 +1,10 @@
-use std::sync::atomic::{AtomicUsize, Ordering};
-
-static COUNT: AtomicUsize = AtomicUsize::new(0);
+use cached::proc_macro::cached;
 
 pub fn solve(input: &str, repeat: usize) -> usize {
     input.lines().map(|line| process_line(line, repeat)).sum()
 }
 
 fn process_line(line: &str, repeat: usize) -> usize {
-    dbg!(&COUNT);
-    COUNT.fetch_add(1, Ordering::SeqCst);
     let (record, groups) = line.split_once(' ').unwrap();
 
     let record = (0..repeat)
@@ -22,10 +18,11 @@ fn process_line(line: &str, repeat: usize) -> usize {
         .collect::<Vec<usize>>()
         .repeat(repeat);
 
-    fit(&record, groups)
+    fit(record, groups)
 }
 
-fn fit(record: &str, groups: Vec<usize>) -> usize {
+#[cached]
+fn fit(record: String, groups: Vec<usize>) -> usize {
     if let Some((gi, &g)) = groups.iter().enumerate().max_by_key(|&(_, g)| g) {
         if record.len() < g {
             0
@@ -69,7 +66,7 @@ fn fit(record: &str, groups: Vec<usize>) -> usize {
                                 1
                             }
                         } else {
-                            fit(rec_left, groups_left.to_vec())
+                            fit(rec_left.to_string(), groups_left.to_vec())
                         }
                     };
 
@@ -88,7 +85,7 @@ fn fit(record: &str, groups: Vec<usize>) -> usize {
                                     1
                                 }
                             } else {
-                                fit(rec_right, groups_right.to_vec())
+                                fit(rec_right.to_string(), groups_right.to_vec())
                             }
                         };
                         options_left * options_right
