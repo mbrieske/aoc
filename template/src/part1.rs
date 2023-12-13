@@ -1,31 +1,16 @@
 pub fn solve(input: &str) -> usize {
-    let mut _lines = input.lines();
-    1
+    let mut lines = input.lines();
+    todo!()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::io::Cursor;
 
     #[test]
     fn example() {
-        let example = "#.##..##.
-..#.##.#.
-##......#
-##......#
-..#.##.#.
-..##..##.
-#.#.##.#.
+        let example = "";
 
-#...##..#
-#....#..#
-..##..###
-#####.##.
-#####.##.
-..##..###
-#....#..#";
-
-        assert_eq!(solve(example), 405);
+        assert_eq!(solve(example), 0);
     }
 }
