@@ -23,9 +23,8 @@ fn process_field(field: &str) -> usize {
                         Reflection::Horizontal(reflection) => reflection,
                         Reflection::Vertical(reflection) => reflection * 100,
                     };
-                } else {
-                    swap_field(&mut field, x, y);
                 }
+                swap_field(&mut field, x, y);
             } else {
                 swap_field(&mut field, x, y);
             }
@@ -34,7 +33,7 @@ fn process_field(field: &str) -> usize {
     unreachable!();
 }
 
-fn swap_field(field: &mut Vec<Vec<char>>, x: usize, y: usize) {
+fn swap_field(field: &mut [Vec<char>], x: usize, y: usize) {
     if field[y][x] == '#' {
         field[y][x] = '.';
     } else {
@@ -43,25 +42,20 @@ fn swap_field(field: &mut Vec<Vec<char>>, x: usize, y: usize) {
 }
 
 fn find_reflection(field: &Vec<Vec<char>>, ignore: Option<&Reflection>) -> Option<Reflection> {
-    let vertical_reflection = if let Some(Reflection::Vertical(ignore_line)) = ignore {
+    if let Some(Reflection::Vertical(ignore_line)) = ignore {
         find_reflection_vertical(field, Some(*ignore_line))
     } else {
         find_reflection_vertical(field, None)
-    };
-
-    if let Some(reflection) = vertical_reflection {
-        Some(Reflection::Vertical(reflection))
-    } else if let Some(reflection) = {
-        if let Some(Reflection::Horizontal(ignore_line)) = ignore {
-            find_reflection_vertical(&transpose(field.clone()), Some(*ignore_line))
-        } else {
-            find_reflection_vertical(&transpose(field.clone()), None)
-        }
-    } {
-        Some(Reflection::Horizontal(reflection))
-    } else {
-        None
     }
+    .map(Reflection::Vertical)
+    .or_else(|| {
+        if let Some(Reflection::Horizontal(ignore_line)) = ignore {
+            find_reflection_vertical(&transpose(field), Some(*ignore_line))
+        } else {
+            find_reflection_vertical(&transpose(field), None)
+        }
+        .map(Reflection::Horizontal)
+    })
 }
 
 fn find_reflection_vertical(field: &Vec<Vec<char>>, ignore: Option<usize>) -> Option<usize> {
@@ -86,7 +80,7 @@ fn find_reflection_vertical(field: &Vec<Vec<char>>, ignore: Option<usize>) -> Op
     })
 }
 
-fn transpose<T>(v: Vec<Vec<T>>) -> Vec<Vec<T>>
+fn transpose<T>(v: &[Vec<T>]) -> Vec<Vec<T>>
 where
     T: Clone,
 {
@@ -99,6 +93,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rstest::rstest;
 
     #[test]
     fn example() {
@@ -120,36 +115,32 @@ mod tests {
         assert_eq!(solve(example), 400);
     }
 
-    #[test]
-    fn test_1() {
-        let field = "#.##..##.
+    #[rstest]
+    #[case(
+        "#.##..##.
 ..#.##.#.
 ##......#
 ##......#
 ..#.##.#.
 ..##..##.
-#.#.##.#.";
-        assert_eq!(process_field(field), 300);
-    }
-
-    #[test]
-    fn test_2() {
-        let field = "#...##..#
+#.#.##.#.",
+        300
+    )]
+    #[case(
+        "#...##..#
 #....#..#
 ..##..###
 #####.##.
 #####.##.
 ..##..###
-#....#..#";
-        assert_eq!(process_field(field), 100);
-    }
-
-    #[test]
-    fn test_input_not_working() {
-        let field = ".#.##.#.#..#.
+#....#..#",
+        100
+    )]
+    #[case(
+        ".#.##.#.#..#.
 ....#....#..#
 .#..####..##.
-..#.#########
+..#.#########ccar
 ....#.....##.
 .#####.#..##.
 #..#...###..#
@@ -160,7 +151,10 @@ mod tests {
 ..#...#.##..#
 ..#.##..#####
 ..#.##..#####
-..#...#.##..#";
-        process_field(field);
+..#...#.##..#",
+        11
+    )]
+    fn test_example(#[case] input: &str, #[case] expected: usize) {
+        assert_eq!(process_field(input), expected);
     }
 }

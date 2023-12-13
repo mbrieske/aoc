@@ -10,7 +10,7 @@ fn process_field(field: &str) -> usize {
     if let Some(reflection_y) = reflection_y {
         reflection_y * 100
     } else if let Some(reflection_x) = {
-        field = transpose(field);
+        field = transpose(&field);
         find_reflection_vertical(&field)
     } {
         reflection_x
@@ -36,7 +36,7 @@ fn find_reflection_vertical(field: &Vec<Vec<char>>) -> Option<usize> {
     })
 }
 
-fn transpose<T>(v: Vec<Vec<T>>) -> Vec<Vec<T>>
+fn transpose<T>(v: &[Vec<T>]) -> Vec<Vec<T>>
 where
     T: Clone,
 {
