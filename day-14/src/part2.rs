@@ -4,6 +4,7 @@
 
 use cached::proc_macro::cached;
 
+#[must_use]
 pub fn solve(input: &str, cycles: usize) -> usize {
     let mut field: Vec<Vec<char>> = input.lines().map(|line| line.chars().collect()).collect();
     rotate_minus90(&mut field);
@@ -16,18 +17,18 @@ pub fn solve(input: &str, cycles: usize) -> usize {
             let target = (cycles - 1 - first_seen_index) % period + first_seen_index;
             field = seen[target].clone();
             break;
-        } else {
-            seen.push(field.clone())
-        };
+        }
+        seen.push(field.clone());
+
         dbg!(i);
     }
 
     rotate_90(&mut field);
 
-    calculate_val(field)
+    calculate_val(&field)
 }
 
-fn calculate_val(field: Vec<Vec<char>>) -> usize {
+fn calculate_val(field: &[Vec<char>]) -> usize {
     let field_len = field.len();
     field
         .iter()
@@ -36,8 +37,8 @@ fn calculate_val(field: Vec<Vec<char>>) -> usize {
         .sum()
 }
 
-fn get_field_str(field: &Vec<Vec<char>>, rotated: bool) -> String {
-    let mut printfield = field.clone();
+fn get_field_str(field: &[Vec<char>], rotated: bool) -> String {
+    let mut printfield = field.to_owned();
     if rotated {
         rotate_90(&mut printfield);
     };
@@ -49,7 +50,7 @@ fn get_field_str(field: &Vec<Vec<char>>, rotated: bool) -> String {
         .join("\n")
 }
 
-fn roll_field_left(field: &mut Vec<Vec<char>>) {
+fn roll_field_left(field: &mut [Vec<char>]) {
     field.iter_mut().for_each(roll_stones_left);
 }
 
@@ -65,13 +66,12 @@ fn cycle(mut field: Vec<Vec<char>>) -> Vec<Vec<char>> {
 fn roll_stones_left(line: &mut Vec<char>) {
     *line = line
         .split(|&c| c == '#')
-        .map(|substr| {
+        .flat_map(|substr| {
             let mut substr = Vec::from(substr);
             substr.sort_by(|c1, c2| c2.cmp(c1));
             substr.push('#');
             substr
         })
-        .flatten()
         .collect::<Vec<char>>();
     line.pop();
 }
@@ -177,7 +177,7 @@ O.#..O.#.#
             .lines()
             .map(|line| line.chars().collect())
             .collect();
-        assert_eq!(calculate_val(field), 69);
+        assert_eq!(calculate_val(&field), 69);
     }
 
     #[rstest]

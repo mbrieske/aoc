@@ -8,10 +8,10 @@ pub fn solve(input: &str) -> usize {
     field = transpose(&field);
     field.iter_mut().for_each(process_line);
     field = transpose(&field);
-    calculate_val(field)
+    calculate_val(&field)
 }
 
-fn calculate_val(field: Vec<Vec<char>>) -> usize {
+fn calculate_val(field: &[Vec<char>]) -> usize {
     let field_len = field.len();
     field
         .iter()
@@ -23,14 +23,13 @@ fn calculate_val(field: Vec<Vec<char>>) -> usize {
 fn process_line(line: &mut Vec<char>) {
     *line = line
         .split(|&c| c == '#')
-        .map(|substr| {
+        .flat_map(|substr| {
             let mut substr = Vec::from(substr);
-            substr.sort();
+            substr.sort_unstable();
             substr.reverse();
             substr.push('#');
             substr
         })
-        .flatten()
         .collect::<Vec<char>>();
     line.pop();
 }
