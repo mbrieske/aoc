@@ -2,8 +2,6 @@
 #![allow(unused_variables)]
 #![allow(unused_assignments)]
 
-use cached::proc_macro::cached;
-
 #[must_use]
 pub fn solve(input: &str, cycles: usize) -> usize {
     let mut field: Vec<Vec<char>> = input.lines().map(|line| line.chars().collect()).collect();
@@ -54,7 +52,6 @@ fn roll_field_left(field: &mut [Vec<char>]) {
     field.iter_mut().for_each(roll_stones_left);
 }
 
-#[cached]
 fn cycle(mut field: Vec<Vec<char>>) -> Vec<Vec<char>> {
     for _ in 0..4 {
         roll_field_left(&mut field);
