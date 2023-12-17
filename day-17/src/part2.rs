@@ -1,38 +1,39 @@
 use grid::Grid;
 use pathfinding::prelude::astar;
 
-pub fn solve(input: &str) -> usize {
-    let grid = Grid::from_vec(
+pub fn solve(input: &str) -> isize {
+    let grid: Grid<isize> = Grid::from_vec(
         input
             .chars()
             .filter(|&c| c != '\n')
-            .map(|c| c.to_digit(10).unwrap() as usize)
-            .collect::<Vec<usize>>(),
+            .map(|c| c.to_digit(10).unwrap() as isize)
+            .collect(),
         input.lines().next().unwrap().len(),
     );
 
     let goal = Pos {
-        x: grid.cols() - 1,
-        y: grid.rows() - 1,
-        last: (Direction::None, 0),
+        x: grid.cols() as isize - 1,
+        y: grid.rows() as isize - 1,
+        last_dir: Direction::None,
+        last_n_steps: 0,
     };
 
     let result = astar(
         &Pos {
             x: 0,
             y: 0,
-            last: (Direction::None, 0),
+            last_dir: Direction::None,
+            last_n_steps: 0,
         },
         |p| {
-            p.successors(grid.cols() - 1, grid.rows() - 1)
+            p.successors(grid.cols() as isize - 1, grid.rows() as isize - 1)
                 .into_iter()
                 .map(|other| (other, other.cost(&grid)))
         },
         |p| goal.x - p.x + goal.y - p.y,
-        |p| p.x == goal.x && p.y == goal.y && p.last.1 >= 4,
+        |p| p.x == goal.x && p.y == goal.y && p.last_n_steps >= 4,
     );
 
-    dbg!(&result);
     result.unwrap().1
 }
 
@@ -45,123 +46,61 @@ enum Direction {
     Left,
 }
 
+impl Direction {
+    fn opposite(&self) -> Self {
+        match self {
+            Direction::None => Direction::None,
+            Direction::Up => Direction::Down,
+            Direction::Down => Direction::Up,
+            Direction::Left => Direction::Right,
+            Direction::Right => Direction::Left,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 struct Pos {
-    x: usize,
-    y: usize,
-    last: (Direction, usize),
+    x: isize,
+    y: isize,
+    last_dir: Direction,
+    last_n_steps: usize,
 }
 
 impl Pos {
-    fn cost(&self, grid: &Grid<usize>) -> usize {
-        *grid.get(self.y, self.x).unwrap()
+    fn cost(&self, grid: &Grid<isize>) -> isize {
+        *grid.get(self.y as usize, self.x as usize).unwrap()
     }
 
-    fn successors(&self, max_x: usize, max_y: usize) -> Vec<Pos> {
-        let &Pos {
-            x,
-            y,
-            last: (last_dir, last_n_steps),
-        } = self;
-
-        let mut successors = Vec::new();
-
-        if last_n_steps < 4 && last_dir != Direction::None {
-            if last_dir == Direction::Right && x < max_x {
-                successors.push(Pos {
-                    x: x + 1,
-                    y,
-                    last: (Direction::Right, last_n_steps + 1),
-                });
-            } else if last_dir == Direction::Left && x > 0 {
-                successors.push(Pos {
-                    x: x - 1,
-                    y,
-                    last: (Direction::Left, last_n_steps + 1),
-                });
-            } else if last_dir == Direction::Up && y > 0 {
-                successors.push(Pos {
-                    x,
-                    y: y - 1,
-                    last: (Direction::Up, last_n_steps + 1),
-                });
-            } else if last_dir == Direction::Down && y < max_y {
-                successors.push(Pos {
-                    x,
-                    y: y + 1,
-                    last: (Direction::Down, last_n_steps + 1),
-                });
-            }
-        } else {
-            if x < max_x
-                && last_dir != Direction::Left
-                && !(last_dir == Direction::Right && last_n_steps == 10)
-            {
-                let x = x + 1;
-                let n_steps = if last_dir == Direction::Right {
-                    last_n_steps + 1
-                } else {
-                    1
-                };
-                successors.push(Pos {
-                    x,
-                    y,
-                    last: (Direction::Right, n_steps),
-                });
-            }
-
-            if x > 0
-                && last_dir != Direction::Right
-                && !(last_dir == Direction::Left && last_n_steps == 10)
-            {
-                let x = x - 1;
-                let n_steps = if last_dir == Direction::Left {
-                    last_n_steps + 1
-                } else {
-                    1
-                };
-                successors.push(Pos {
-                    x,
-                    y,
-                    last: (Direction::Left, n_steps),
-                });
-            }
-
-            if y < max_y
-                && last_dir != Direction::Up
-                && !(last_dir == Direction::Down && last_n_steps == 10)
-            {
-                let y = y + 1;
-                let n_steps = if last_dir == Direction::Down {
-                    last_n_steps + 1
-                } else {
-                    1
-                };
-                successors.push(Pos {
-                    x,
-                    y,
-                    last: (Direction::Down, n_steps),
-                });
-            }
-
-            if y > 0
-                && last_dir != Direction::Down
-                && !(last_dir == Direction::Up && last_n_steps == 10)
-            {
-                let y = y - 1;
-                let n_steps = if last_dir == Direction::Up {
-                    last_n_steps + 1
-                } else {
-                    1
-                };
-                successors.push(Pos {
-                    x,
-                    y,
-                    last: (Direction::Up, n_steps),
-                });
-            }
-        }
-        successors
+    fn successors(&self, max_x: isize, max_y: isize) -> Vec<Pos> {
+        [
+            (Direction::Up, 0, -1),
+            (Direction::Down, 0, 1),
+            (Direction::Left, -1, 0),
+            (Direction::Right, 1, 0),
+        ]
+        .iter()
+        .map(|&(direction, dx, dy)| Pos {
+            x: self.x + dx,
+            y: self.y + dy,
+            last_dir: direction,
+            last_n_steps: if direction == self.last_dir {
+                self.last_n_steps + 1
+            } else {
+                1
+            },
+        })
+        .filter(|pos| {
+            pos.x >= 0
+                && pos.x <= max_x
+                && pos.y >= 0
+                && pos.y <= max_y
+                && pos.last_n_steps <= 10
+                && pos.last_dir != self.last_dir.opposite()
+                && !(self.last_dir != Direction::None
+                    && self.last_n_steps < 4
+                    && self.last_dir != pos.last_dir)
+        })
+        .collect()
     }
 }
 
