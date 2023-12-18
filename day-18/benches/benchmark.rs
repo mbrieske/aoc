@@ -1,6 +1,6 @@
-extern crate day_xx;
+extern crate day_18;
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use day_xx::part1::solve;
+use day_18::part1::solve;
 
 fn criterion_benchmark(c: &mut Criterion) {
     let input = "";

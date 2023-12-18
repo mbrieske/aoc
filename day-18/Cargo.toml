@@ -5,16 +5,15 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[profile.release]
-opt-level = 3
-lto = true
-codegen-units = 1
-overflow-checks = false
+#[profile.release]
+#opt-level = 3
+#lto = true
+#codegen-units = 1
+#overflow-checks = false
 
 [dependencies]
 grid = "0.12.0"
 hex = "0.4.3"
-pathfinding = "4.6.0"
 #cached = "0.46.1"
 #rayon = "1.8.0"
 

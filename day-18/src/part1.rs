@@ -1,7 +1,7 @@
+use grid::Grid;
 use std::fmt::Display;
 
-use grid::Grid;
-
+#[allow(dead_code)]
 #[derive(Clone)]
 enum Terrain {
     Trench { color: Vec<u8> },
@@ -11,8 +11,8 @@ enum Terrain {
 impl Display for Terrain {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Terrain::Trench { color } => write!(f, "{}", '#'),
-            Terrain::Ground => write!(f, "{}", '.'),
+            Terrain::Trench { color: _ } => write!(f, "#"),
+            Terrain::Ground => write!(f, "."),
         }
     }
 }
@@ -24,6 +24,7 @@ enum Direction {
     Right(isize),
 }
 
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
 struct Position {
     x: isize,
     y: isize,
@@ -47,7 +48,7 @@ impl Default for Terrain {
     }
 }
 
-pub fn solve(input: &str) -> isize {
+pub fn solve(input: &str) -> usize {
     let mut grid: Grid<Terrain> = Grid::from_vec(vec![Terrain::Trench { color: vec![0; 3] }; 1], 1);
     let mut position = Position { x: 0, y: 0 };
 
@@ -61,8 +62,32 @@ pub fn solve(input: &str) -> isize {
         let dir = Direction::from((dir_char, len));
         extend_grid(&mut grid, &mut position, dir, color)
     });
-    print_grid(&grid);
-    todo!()
+
+    let start_pos = find_inside(&grid);
+    flood(&mut grid, start_pos);
+    grid.iter()
+        .filter(|&t| matches!(t, Terrain::Trench { color: _ }))
+        .count()
+}
+
+fn find_inside(grid: &Grid<Terrain>) -> Position {
+    for y in 0..grid.rows() {
+        let mut is_perimeter = false;
+        'x_loop: for (x, t) in grid.iter_row(y).enumerate() {
+            match (is_perimeter, t) {
+                (false, Terrain::Trench { color: _ }) => is_perimeter = true,
+                (false, Terrain::Ground) => (),
+                (true, Terrain::Trench { color: _ }) => break 'x_loop,
+                (true, Terrain::Ground) => {
+                    return Position {
+                        x: x as isize,
+                        y: y as isize,
+                    }
+                }
+            }
+        }
+    }
+    unreachable!()
 }
 
 fn extend_grid(grid: &mut Grid<Terrain>, pos: &mut Position, dir: Direction, color: Vec<u8>) {
@@ -116,14 +141,34 @@ fn extend_grid(grid: &mut Grid<Terrain>, pos: &mut Position, dir: Direction, col
     }
 }
 
-fn print_grid(grid: &Grid<Terrain>) {
-    for row in grid.iter_rows() {
-        for t in row {
-            print!("{}", t);
+fn flood(grid: &mut Grid<Terrain>, start_pos: Position) {
+    let mut queue = Vec::new();
+    queue.push(start_pos);
+
+    while let Some(pos) = queue.pop() {
+        let (col, row) = (pos.x as usize, pos.y as usize);
+
+        if let Some(Terrain::Ground) = grid.get(row, col) {
+            *grid.get_mut(row, col).unwrap() = Terrain::Trench { color: vec![0; 3] };
+            for &(dx, dy) in &[(-1, 0), (1, 0), (0, -1), (0, 1)] {
+                let new_pos = Position {
+                    x: pos.x + dx,
+                    y: pos.y + dy,
+                };
+                queue.push(new_pos);
+            }
         }
-        println!();
     }
 }
+
+// fn print_grid(grid: &Grid<Terrain>) {
+//     for row in grid.iter_rows() {
+//         for t in row {
+//             print!("{}", t);
+//         }
+//         println!();
+//     }
+// }
 
 #[cfg(test)]
 mod tests {
