@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 enum Direction {
     Up(isize),
     Down(isize),
@@ -64,9 +66,11 @@ pub fn solve(input: &str) -> isize {
             acc
         });
 
-    let a = vertices.windows(2).fold(0, |acc, vertices| {
-        acc + vertices[0].x * vertices[1].y - vertices[1].x * vertices[0].y
-    }) / 2;
+    let a = vertices
+        .iter()
+        .tuple_windows()
+        .fold(0, |acc, (v1, v2)| acc + v1.x * v2.y - v2.x * v1.y)
+        / 2;
 
     let perimeter = directions.iter().fold(0, |acc, dir| acc + dir.len()) / 2 + 1;
     a + perimeter
