@@ -19,7 +19,6 @@ impl Display for Terrain {
         }
     }
 }
-
 enum Direction {
     Up(isize),
     Down(isize),
