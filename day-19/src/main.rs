@@ -1,4 +1,4 @@
-use day_19::part1::solve;
+use day_19::part2::solve;
 use std::fs::read_to_string;
 
 fn main() {

@@ -37,7 +37,9 @@ pub fn solve(input: &str) -> usize {
                 Next::Accepted
             )
         })
-        .fold(0, |acc, part| acc + part.x + part.m + part.a + part.s)
+        .fold(0, |acc, part| {
+            acc + part.x as usize + part.m as usize + part.a as usize + part.s as usize
+        })
 }
 
 fn qualify<'a>(
@@ -58,15 +60,15 @@ fn qualify<'a>(
 
 #[derive(Debug)]
 struct Part {
-    x: usize,
-    m: usize,
-    a: usize,
-    s: usize,
+    x: u16,
+    m: u16,
+    a: u16,
+    s: u16,
 }
 
 impl From<&str> for Part {
     fn from(s: &str) -> Self {
-        let ratings: Vec<usize> = s[1..s.len() - 1]
+        let ratings: Vec<u16> = s[1..s.len() - 1]
             .split(',')
             .map(|rating| rating[2..].parse().unwrap())
             .collect();
@@ -79,7 +81,7 @@ impl From<&str> for Part {
 }
 
 impl Part {
-    fn rating(&self, cat: &Category) -> usize {
+    fn rating(&self, cat: &Category) -> u16 {
         match cat {
             Category::X => self.x,
             Category::M => self.m,
@@ -136,8 +138,8 @@ impl<'a> From<&'a str> for Next<'a> {
 
 #[derive(Debug)]
 enum Condition {
-    Gt(Category, usize),
-    Lt(Category, usize),
+    Gt(Category, u16),
+    Lt(Category, u16),
     Pass,
 }
 
