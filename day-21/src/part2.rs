@@ -2,7 +2,7 @@ use std::{collections::HashSet, fmt::Display};
 
 #[allow(unused_imports)]
 use itertools::Itertools;
-use tracing::{instrument, Level};
+use tracing::{event, instrument, Level};
 
 pub fn solve(input: &str, steps: isize) -> isize {
     let grid: Vec<Vec<Terrain>> = input
@@ -23,7 +23,11 @@ pub fn solve(input: &str, steps: isize) -> isize {
     let mut reachable: HashSet<(isize, isize)> = HashSet::from([start_pos]);
     let directions = [(-1, 0), (1, 0), (0, -1), (0, 1)];
 
-    for _ in 0..steps {
+    let offset = steps % grid_size.0;
+    let x = steps / grid_size.0;
+    event!(Level::INFO, "Solve for x = {}, quadratic fit values:", x);
+
+    for i in 1..=2 * grid_size.0 + offset {
         reachable = reachable
             .iter()
             .flat_map(|pos| {
@@ -32,6 +36,9 @@ pub fn solve(input: &str, steps: isize) -> isize {
                     .filter_map(|&dir| walk(&grid, grid_size, pos, dir))
             })
             .collect();
+        if i % grid_size.0 == offset && i != 2 * grid_size.0 + offset {
+            event!(Level::INFO, "{}", reachable.len());
+        }
     }
 
     reachable.len().try_into().unwrap()
