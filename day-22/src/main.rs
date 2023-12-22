@@ -1,4 +1,4 @@
-use day_22::{part1::solve, utils::tracing_init};
+use day_22::{part2::solve, utils::tracing_init};
 use std::fs::read_to_string;
 use tracing::{event, Level};
 
