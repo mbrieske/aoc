@@ -1,39 +1,24 @@
+use indicatif::ProgressIterator;
 use itertools::Itertools;
-use tracing::debug;
 use z3::ast::{Ast, Real};
 use z3::*;
 
+use crate::utils::progressbar_init;
+
 #[derive(Debug, Clone)]
-struct Hailstone {
-    x: i32,
-    y: i32,
-    z: i32,
-    dx: i32,
-    dy: i32,
-    dz: i32,
+struct Hailstone<'a> {
+    x: &'a str,
+    y: &'a str,
+    dx: &'a str,
+    dy: &'a str,
 }
 
-impl From<&str> for Hailstone {
-    fn from(line: &str) -> Self {
+impl<'a> From<&'a str> for Hailstone<'a> {
+    fn from(line: &'a str) -> Self {
         let (pos, speed) = line.split_once(" @ ").unwrap();
-        if let [x, y, z] = pos
-            .split(", ")
-            .map(|s: &str| s.parse().unwrap())
-            .collect::<Vec<i32>>()[..]
-        {
-            if let [dx, dy, dz] = speed
-                .split(", ")
-                .map(|s: &str| s.parse().unwrap())
-                .collect::<Vec<i32>>()[..]
-            {
-                Self {
-                    x,
-                    y,
-                    z,
-                    dx,
-                    dy,
-                    dz,
-                }
+        if let [x, y, _] = pos.split(", ").collect::<Vec<&str>>()[..] {
+            if let [dx, dy, _] = speed.split(", ").collect::<Vec<&str>>()[..] {
+                Self { x, y, dx, dy }
             } else {
                 unreachable!()
             }
@@ -43,100 +28,59 @@ impl From<&str> for Hailstone {
     }
 }
 
-pub fn solve(input: &str, bounds: (i32, i32)) -> usize {
-    // progressbar_init(total_iterations);
-    // .progress_with(progress_bar)
+pub fn solve(input: &str, bounds: (i64, i64)) -> usize {
     let cfg = Config::new();
 
-    input
+    let hailstone_combinations: Vec<_> = input
         .lines()
         .map(Hailstone::from)
         .tuple_combinations()
+        .collect();
+
+    let progress_bar = progressbar_init(hailstone_combinations.len() as u64);
+
+    hailstone_combinations
+        .iter()
+        .progress_with(progress_bar)
         .filter(|(hailstone, other)| {
             let ctx = Context::new(&cfg);
             let solver = Solver::new(&ctx);
 
-            let x1 = Real::from_real(&ctx, hailstone.x, 1);
-            let y1 = Real::from_real(&ctx, hailstone.y, 1);
-            let dx1 = Real::from_real(&ctx, hailstone.dx, 1);
-            let dy1 = Real::from_real(&ctx, hailstone.dy, 1);
+            let x1 = Real::from_real_str(&ctx, hailstone.x, "1").unwrap();
+            let y1 = Real::from_real_str(&ctx, hailstone.y, "1").unwrap();
+            let dx1 = Real::from_real_str(&ctx, hailstone.dx, "1").unwrap();
+            let dy1 = Real::from_real_str(&ctx, hailstone.dy, "1").unwrap();
 
-            let x2 = Real::from_real(&ctx, other.x, 1);
-            let y2 = Real::from_real(&ctx, other.y, 1);
-            let dx2 = Real::from_real(&ctx, other.dx, 1);
-            let dy2 = Real::from_real(&ctx, other.dy, 1);
+            let x2 = Real::from_real_str(&ctx, other.x, "1").unwrap();
+            let y2 = Real::from_real_str(&ctx, other.y, "1").unwrap();
+            let dx2 = Real::from_real_str(&ctx, other.dx, "1").unwrap();
+            let dy2 = Real::from_real_str(&ctx, other.dy, "1").unwrap();
 
-            let lower_bound = Real::from_real(&ctx, bounds.0, 1);
-            let upper_bound = Real::from_real(&ctx, bounds.1, 1);
+            let lower_bound = Real::from_real_str(&ctx, &bounds.0.to_string(), "1").unwrap();
+            let upper_bound = Real::from_real_str(&ctx, &bounds.1.to_string(), "1").unwrap();
 
-            // Variables representing the parameterization of the lines
             let t = Real::new_const(&ctx, "t");
             let s = Real::new_const(&ctx, "s");
 
-            // Equations for the intersection of the vectors
-            let eq1 = Real::add(&ctx, &[&x1, &Real::mul(&ctx, &[&t, &dx1])])
-                ._eq(&Real::add(&ctx, &[&x2, &Real::mul(&ctx, &[&s, &dx2])]));
-            let eq2 = Real::add(&ctx, &[&y1, &Real::mul(&ctx, &[&t, &dy1])])
-                ._eq(&Real::add(&ctx, &[&y2, &Real::mul(&ctx, &[&s, &dy2])]));
+            let eq1 = &(&x1 + &t * &dx1)._eq(&(&x2 + &s * &dx2));
+            let eq2 = &(&y1 + &t * &dy1)._eq(&(&y2 + &s * &dy2));
 
-            // Add constraints to the solver
-            solver.assert(&eq1);
-            solver.assert(&eq2);
+            solver.assert(eq1);
+            solver.assert(eq2);
             solver.assert(&t.ge(&Real::from_real(&ctx, 0, 1)));
             solver.assert(&s.ge(&Real::from_real(&ctx, 0, 1)));
-            solver.assert(&Real::add(&ctx, &[&x1, &Real::mul(&ctx, &[&t, &dx1])]).ge(&lower_bound));
-            solver.assert(&Real::add(&ctx, &[&x2, &Real::mul(&ctx, &[&s, &dx2])]).ge(&lower_bound));
-            solver.assert(&Real::add(&ctx, &[&y1, &Real::mul(&ctx, &[&t, &dy1])]).ge(&lower_bound));
-            solver.assert(&Real::add(&ctx, &[&y2, &Real::mul(&ctx, &[&s, &dy2])]).ge(&lower_bound));
-            solver.assert(&Real::add(&ctx, &[&x1, &Real::mul(&ctx, &[&t, &dx1])]).le(&upper_bound));
-            solver.assert(&Real::add(&ctx, &[&x2, &Real::mul(&ctx, &[&s, &dx2])]).le(&upper_bound));
-            solver.assert(&Real::add(&ctx, &[&y1, &Real::mul(&ctx, &[&t, &dy1])]).le(&upper_bound));
-            solver.assert(&Real::add(&ctx, &[&y2, &Real::mul(&ctx, &[&s, &dy2])]).le(&upper_bound));
+            solver.assert(&(&x1 + &t * &dx1).ge(&lower_bound));
+            solver.assert(&(&x2 + &s * &dx2).ge(&lower_bound));
+            solver.assert(&(&y1 + &t * &dy1).ge(&lower_bound));
+            solver.assert(&(&y2 + &s * &dy2).ge(&lower_bound));
+            solver.assert(&(&x1 + &t * &dx1).le(&upper_bound));
+            solver.assert(&(&x2 + &s * &dx2).le(&upper_bound));
+            solver.assert(&(&y1 + &t * &dy1).le(&upper_bound));
+            solver.assert(&(&y2 + &s * &dy2).le(&upper_bound));
 
             match solver.check() {
-                z3::SatResult::Sat => {
-                    let model = solver.get_model().unwrap();
-
-                    let intersection_x = model
-                        .eval(
-                            &Real::add(&ctx, &[&x1, &Real::mul(&ctx, &[&t, &dx1])]),
-                            true,
-                        )
-                        .unwrap()
-                        .as_real()
-                        .unwrap();
-                    let intersection_y = model
-                        .eval(
-                            &Real::add(&ctx, &[&y1, &Real::mul(&ctx, &[&t, &dy1])]),
-                            true,
-                        )
-                        .unwrap()
-                        .as_real()
-                        .unwrap();
-
-                    let t = model.eval(&t, true).unwrap().as_real().unwrap();
-                    let s = model.eval(&s, true).unwrap().as_real().unwrap();
-
-                    debug!(
-                        "{:?} and {:?} intersect at x={}, y={}, t={}, s={}",
-                        hailstone,
-                        other,
-                        intersection_x.0 as f32 / intersection_x.1 as f32,
-                        intersection_y.0 as f32 / intersection_y.1 as f32,
-                        t.0 as f32 / t.1 as f32,
-                        s.0 as f32 / s.1 as f32
-                    );
-
-                    true
-                }
-
-                _ => {
-                    debug!(
-                        "{:?} and {:?} don't intersect in the future",
-                        hailstone, other
-                    );
-                    false
-                }
+                z3::SatResult::Sat => true,
+                _ => false,
             }
         })
         .count()
